@@ -3,3 +3,6 @@ build
 tags
 .editorconfig
 .DS_Store
+*.swp
+*.swo
+term2_sim_linux
