@@ -258,8 +258,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //std::cout << "Cost " << cost << std::endl;
 
   return {
-    solution.x[delta_start],
-    solution.x[a_start],
+    solution.x[delta_start + 1],
+    solution.x[a_start + 1],
     solution.x[x_start],
     solution.x[x_start+4],
     solution.x[x_start+9],
