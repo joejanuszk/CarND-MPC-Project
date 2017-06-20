@@ -114,3 +114,5 @@ The mapping itself occurs in the function `getForwardWaypointsInCarCoordinateSys
 Before introducing the required 100ms latency, I developed a solution for the case where there is no latency. I saw that once latency was added, the car tended to oscillate about the road centerline and switch between acceleration and deceleration often.
 
 Although my solution was still successful, I found that I was able to improve it by choosing the throttle and steering value that are anticipated by the model at the 100ms mark, rather than the instantaneous throttle and steering value. This makes sense; if it takes 100ms for the signal to reach the actuators, then the car should be actuated with the throttle and steering value that is predicted to be necessary at that time rather than the current time.
+
+It was noted by a previous project reviewer that it's necessary to constrain the bounds of the first timestep's acceleration and steering values when using this method. I had not done so originally, but I have since updated the solver to do so.

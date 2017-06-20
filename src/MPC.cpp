@@ -68,7 +68,7 @@ class FG_eval {
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
       fg[0] += 5000 * CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+      fg[0] += 10 * CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
@@ -118,7 +118,7 @@ class FG_eval {
 
       // Fit to 3rd order polynomial
       AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * pow(x0, 2) + coeffs[3] * pow(x0, 3);
-      AD<double> psides0 = CppAD::atan(coeffs[1]);
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * pow(x0, 2));
 
       // Equations for the model:
       // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
@@ -145,7 +145,7 @@ class FG_eval {
 MPC::MPC() {}
 MPC::~MPC() {}
 
-vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
+vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, double prev_a, double prev_delta) {
   bool ok = true;
   size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
@@ -187,14 +187,18 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // The upper and lower limits of delta are set to -25 and 25
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
-  for (int i = delta_start; i < a_start; i++) {
+  vars_lowerbound[delta_start] = prev_delta;
+  vars_upperbound[delta_start] = prev_delta;
+  for (int i = delta_start + 1; i < a_start; i++) {
     vars_lowerbound[i] = -0.436332 * 0.3;
     vars_upperbound[i] = 0.436332 * 0.3;
   }
 
   // Acceleration/decceleration upper and lower limits.
   // NOTE: Feel free to change this to something else.
-  for (int i = a_start; i < n_vars; i++) {
+  vars_lowerbound[a_start] = prev_a;
+  vars_upperbound[a_start] = prev_a;
+  for (int i = a_start + 1; i < n_vars; i++) {
     vars_lowerbound[i] = -1.0;
     vars_upperbound[i] = 1.0;
   }
@@ -258,6 +262,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //std::cout << "Cost " << cost << std::endl;
 
   return {
+    // anticipate 100ms latency by taking the next values,
+    // which correspond to 100ms because of the 0.1 timestep.
     solution.x[delta_start + 1],
     solution.x[a_start + 1],
     solution.x[x_start],

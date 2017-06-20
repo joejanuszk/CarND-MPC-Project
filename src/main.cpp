@@ -112,6 +112,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double delta = j[1]["steering_angle"];
+          double a = j[1]["throttle"];
 
           // Map global coordinates into car coordinates.
           // This is important for two reasons:
@@ -148,7 +150,7 @@ int main() {
           // relative to the grid when we work in car coordinates
           state << 0, 0, 0, v_meters_per_sec, cte, epsi;
 
-          auto vars = mpc.Solve(state, coeffs);
+          auto vars = mpc.Solve(state, coeffs, a, delta);
 
           // I'm not sure why this was necessary, but I found that
           // I had to invert the steering angle for it to work
